@@ -1,9 +1,68 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import community from "../../assets/images/priscilla-du-preez-XkKCui44iM0-unsplash.jpg";
+import { AuthContext } from "../../context/AuthContext";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const navigate = useNavigate();
+  const { signInUser, signGoogle, setLoading } = useContext(AuthContext);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+
+    if (!email.trim() || !password) {
+      setAuthError("Please enter both email and password.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signInUser(email, password);
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      if (setLoading) setLoading(false);
+      let message = "Failed to log in. Please check your credentials.";
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
+        message = "Invalid email or password.";
+      } else if (err.code === "auth/invalid-email") {
+        message = "Please enter a valid email address.";
+      } else if (err.code === "auth/too-many-requests") {
+        message = "Too many failed attempts. Please try again later.";
+      } else if (err.message) {
+        message = err.message;
+      }
+      setAuthError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setAuthError("");
+    setSubmitting(true);
+    try {
+      await signGoogle();
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      if (setLoading) setLoading(false);
+      setAuthError(err.message || "Failed to sign in with Google.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -66,7 +125,13 @@ const Login = () => {
             Log in to your account to continue learning.
           </p>
 
-          <form className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
+            {authError && (
+              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                {authError}
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">
                 Email address
@@ -75,6 +140,9 @@ const Login = () => {
               <input
                 type="email"
                 placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -97,6 +165,9 @@ const Login = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 pr-12"
                 />
 
@@ -118,12 +189,13 @@ const Login = () => {
             </label>
 
             {/* Login Button */}
-            <Link
-              to="/dashboard"
-              className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-center transition-colors"
+            <button
+              type="submit"
+              disabled={submitting}
+              className="block w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-center transition-colors cursor-pointer"
             >
-              Log In
-            </Link>
+              {submitting ? "Logging In..." : "Log In"}
+            </button>
           </form>
 
           {/* Divider */}
@@ -138,7 +210,9 @@ const Login = () => {
           {/* Google Login */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 py-3 rounded-xl text-sm font-medium text-slate-700 transition-colors"
+            disabled={submitting}
+            onClick={handleGoogle}
+            className="w-full flex items-center justify-center gap-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 py-3 rounded-xl text-sm font-medium text-slate-700 transition-colors cursor-pointer"
           >
             <img
               alt="Google"

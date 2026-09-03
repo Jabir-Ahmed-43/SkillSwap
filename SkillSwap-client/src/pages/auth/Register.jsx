@@ -1,5 +1,5 @@
-import { use, useState } from "react";
-import { Link } from "react-router";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { AuthContext } from "../../context/AuthContext";
 
 const Register = () => {
@@ -11,19 +11,78 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const { createUser } = use(AuthContext);
+  const navigate = useNavigate();
+  const { createUser, updateUserProfile, signGoogle, setLoading } =
+    useContext(AuthContext);
 
-  function handleSignUp(e) {
+  async function handleSignUp(e) {
     e.preventDefault();
+    setAuthError("");
 
-    createUser()
-      .then((result) => {
-        console.log(result.user);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (!name.trim()) {
+      setAuthError("Please enter your full name.");
+      return;
+    }
+
+    if (!email.trim()) {
+      setAuthError("Please enter your email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setPasswordError("");
+    setSubmitting(true);
+
+    try {
+      await createUser(email, password);
+      if (name.trim() && updateUserProfile) {
+        await updateUserProfile(name.trim());
+      }
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      if (setLoading) setLoading(false);
+      let message = "Failed to create account. Please try again.";
+      if (err.code === "auth/email-already-in-use") {
+        message = "This email is already in use.";
+      } else if (err.code === "auth/invalid-email") {
+        message = "Please enter a valid email address.";
+      } else if (err.code === "auth/weak-password") {
+        message = "Password should be at least 6 characters.";
+      } else if (err.message) {
+        message = err.message;
+      }
+      setAuthError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleGoogle() {
+    setAuthError("");
+    setSubmitting(true);
+    try {
+      await signGoogle();
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      if (setLoading) setLoading(false);
+      setAuthError(err.message || "Failed to sign in with Google.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -129,6 +188,12 @@ const Register = () => {
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-4">
+            {authError && (
+              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                {authError}
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">
                 Full Name
@@ -139,6 +204,7 @@ const Register = () => {
                 placeholder="Seikh Hasina"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -153,6 +219,7 @@ const Register = () => {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -165,9 +232,22 @@ const Register = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a strong password"
+                  placeholder="Create a strong password (min 6 characters)"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPassword(value);
+                    if (confirmPassword && value !== confirmPassword) {
+                      setPasswordError("Passwords do not match");
+                    } else if (value.length > 0 && value.length < 6) {
+                      setPasswordError(
+                        "Password must be at least 6 characters",
+                      );
+                    } else {
+                      setPasswordError("");
+                    }
+                  }}
+                  required
                   className="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
 
@@ -196,18 +276,17 @@ const Register = () => {
                     setConfirmPassword(value);
 
                     if (value !== password) {
-                      setPasswordError("Password is mismatched");
+                      setPasswordError("Passwords do not match");
                     } else {
                       setPasswordError("");
                     }
                   }}
+                  required
                   className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 ${
                     passwordError
                       ? "border-red-400 focus:border-red-400 focus:ring-red-100"
                       : "border-slate-200 focus:border-indigo-400 focus:ring-indigo-100"
                   }`}
-
-                  //   className="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
 
                 <button
@@ -218,18 +297,17 @@ const Register = () => {
                   {showConfirmPassword ? "🙈" : "👁️"}
                 </button>
               </div>
-              <div>
-                {passwordError && (
-                  <p className="text-red-500">Incorrect password</p>
-                )}
-              </div>
+              {passwordError && (
+                <p className="text-red-500 text-xs mt-1.5">{passwordError}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-center transition-colors"
+              disabled={submitting}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-center transition-colors cursor-pointer"
             >
-              Create Account
+              {submitting ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 
@@ -243,7 +321,9 @@ const Register = () => {
 
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 py-3 rounded-xl text-sm font-medium text-slate-700 transition-colors"
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-3 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 py-3 rounded-xl text-sm font-medium text-slate-700 transition-colors cursor-pointer"
+            onClick={handleGoogle}
           >
             <img
               src="https://www.google.com/favicon.ico"

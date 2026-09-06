@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import ExploreSkills from "../pages/public/ExploreSkills";
 import Home from "../pages/public/Home";
 import Root from "../root/Root";
 
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
       },
       {
         path: "explore-skills",
+        element: <ExploreSkills></ExploreSkills>,
       },
       {
         path: "login",

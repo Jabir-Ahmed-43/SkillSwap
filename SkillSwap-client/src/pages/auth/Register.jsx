@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { AuthContext } from "../../context/AuthContext";
@@ -50,6 +51,13 @@ const Register = () => {
       if (name.trim() && updateUserProfile) {
         await updateUserProfile(name.trim());
       }
+
+      await axios.post("http://localhost:3000/users", {
+        name,
+        email,
+        role,
+      });
+
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -74,7 +82,15 @@ const Register = () => {
     setAuthError("");
     setSubmitting(true);
     try {
-      await signGoogle();
+      const result = await signGoogle();
+
+      const user = result.user;
+
+      await axios.post("http://localhost:3000/users", {
+        name: user.displayName,
+        email: user.email,
+        role: role,
+      });
       navigate("/");
     } catch (err) {
       console.error(err);

@@ -1,12 +1,16 @@
 const express = require("express");
 require("dotenv").config();
 const app = express();
+const cors = require("cors");
+app.use(cors);
+app.use(express.json());
 const port = 3000;
 const { MongoClient, ServerApiVersion } = require("mongodb");
+
 const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.rxvswgv.mongodb.net/?appName=Cluster0`;
 
-//database
-const client = new MongoClient(uri, {
+// 1. Change to 'let' so it can be reassigned during the local fallback
+let client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -14,12 +18,18 @@ const client = new MongoClient(uri, {
   },
 });
 
+// 2. Declare collections globally so your Express routes can access them
+let skillSwapDatabase;
+let usersCollection;
+let mentorsCollection;
+let bookingsCollection;
+let reviewsCollection;
+let skillsCollection;
+
 async function run() {
   try {
     await client.connect();
-
     await client.db("admin").command({ ping: 1 });
-
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
@@ -32,6 +42,8 @@ async function run() {
       const localUri = "mongodb://127.0.0.1:27017/skill_swap";
       const localClient = new MongoClient(localUri);
       await localClient.connect();
+
+      // This will now work without throwing an error
       client = localClient;
       console.log("Successfully connected to local MongoDB fallback!");
     } catch (localErr) {
@@ -40,17 +52,61 @@ async function run() {
       );
     }
   }
-}
 
-const skillSwapDatabase = client.db("skill_swap");
-const usersCollection = skillSwapDatabase.collection("users");
-const mentorsCollection = skillSwapDatabase.collection("mentors");
-const bookingsCollection = skillSwapDatabase.collection("bookings");
-const reviewsCollection = skillSwapDatabase.collection("reviews");
-const skillsCollection = skillSwapDatabase.collection("skills");
+  // 3. Initialize the collections AFTER the connection is established.
+  // This ensures they are attached to whichever client (remote or local) actually worked.
+  skillSwapDatabase = client.db("skill_swap");
+  usersCollection = skillSwapDatabase.collection("users");
+  mentorsCollection = skillSwapDatabase.collection("mentors");
+  bookingsCollection = skillSwapDatabase.collection("bookings");
+  reviewsCollection = skillSwapDatabase.collection("reviews");
+  skillsCollection = skillSwapDatabase.collection("skills");
+}
 
 app.get("/", (req, res) => {
   res.send("Hello world");
+});
+
+app.get("/skills", async (req, res) => {
+  try {
+    const skills = await skillsCollection.find({}).toArray();
+    res.json(skills);
+  } catch (error) {
+    console.error("Error fetching skills", error);
+    res.status(500).json({ error: "Failed to fetch skills" });
+  }
+});
+
+app.get("/mentors", async (req, res) => {
+  try {
+    const mentors = await mentorsCollection.find({}).toArray();
+    res.json(mentors);
+  } catch (error) {
+    console.error("Error fetching mentors", error);
+    res.status(500).json({ error: "Failed to fetch mentors" });
+  }
+});
+
+app.post("/users", async (req, res) => {
+  try {
+    const newUser = req.body;
+
+    if (!newUser.name || !newUser.email) {
+      return res.status(400).json({ error: "Name and email are required" });
+    }
+
+    newUser.createAt = new Date();
+
+    const result = await usersCollection.insertOne(newUser);
+
+    res.status(201).json({
+      message: "User saved successfully",
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Error saving user: ", error);
+    res.status(500).json({ error: "Failed to save user to the database" });
+  }
 });
 
 run().catch(console.dir);

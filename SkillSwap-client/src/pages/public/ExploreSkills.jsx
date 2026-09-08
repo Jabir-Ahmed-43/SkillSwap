@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { BounceLoader } from "react-spinners";
+
+import SkillCard from "../../components/skill/SkillCard";
 
 const ExploreSkills = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [skills, setSkills] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const categories = [
     "All",
@@ -30,12 +33,12 @@ const ExploreSkills = () => {
         }
         const data = await response.json();
         setSkills(data);
-        setLoading(false);
+        setIsLoading(false);
         console.log(data);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err.message);
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchSkills();
@@ -104,40 +107,22 @@ const ExploreSkills = () => {
         ))}
       </div>
 
+      {isLoading && (
+        // <p className="text-center text-gray-500 my-10">
+        //   Loading skills from the database...
+        // </p>
+
+        <BounceLoader color="#4f39f6" />
+      )}
+      {error && (
+        <p className="text-center text-gray-500 my-10">Error: {error} </p>
+      )}
+
       <p className="text-gray-500 text-sm mb-4">{skills.length} skills found</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {skills.map((skill) => (
-          <div
-            key={skill.id}
-            className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-3xl">{skill.icon}</span>
-              {skill.popular && (
-                <span className="bg-orange-50 text-orange-600 text-xs font-semibold px-2 py-1 rounded">
-                  Popular
-                </span>
-              )}
-            </div>
-
-            <h3 className="text-lg font-bold mb-2">{skill.title}</h3>
-            <p className="text-gray-500 text-sm flex-grow mb-6 line-clamp-2">
-              {skill.description}
-            </p>
-
-            <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-50">
-              <span className="text-sm text-gray-500">
-                {skill.mentors} mentors available
-              </span>
-              <a
-                href={`/explore/${skill.id}`}
-                className="text-indigo-600 text-sm font-medium hover:text-indigo-700"
-              >
-                Explore &rarr;
-              </a>
-            </div>
-          </div>
+          <SkillCard key={skill._id} skill={skill}></SkillCard>
         ))}
       </div>
     </div>

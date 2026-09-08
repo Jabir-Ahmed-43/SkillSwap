@@ -2,7 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const app = express();
 const cors = require("cors");
-app.use(cors);
+app.use(cors());
 app.use(express.json());
 const port = 3000;
 const { MongoClient, ServerApiVersion } = require("mongodb");
@@ -84,6 +84,24 @@ app.get("/mentors", async (req, res) => {
   } catch (error) {
     console.error("Error fetching mentors", error);
     res.status(500).json({ error: "Failed to fetch mentors" });
+  }
+});
+
+app.get("/skills/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { skillId: id };
+
+    const skill = await skillsCollection.findOne(query);
+
+    if (skill) {
+      res.json(skill);
+    } else {
+      res.status(404).json({ error: "Skill not found" });
+    }
+  } catch (err) {
+    console.error("Error fetching single skill: ", err);
+    res.status(500).json({ err: "Failed to fetch the skill" });
   }
 });
 

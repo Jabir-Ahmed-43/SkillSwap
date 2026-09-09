@@ -5,7 +5,12 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 const port = 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+  serialize,
+} = require("mongodb");
 
 const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.rxvswgv.mongodb.net/?appName=Cluster0`;
 
@@ -69,7 +74,19 @@ app.get("/", (req, res) => {
 
 app.get("/skills", async (req, res) => {
   try {
-    const skills = await skillsCollection.find({}).toArray();
+    const search = req.query.search;
+    const query = {};
+
+    if (search) {
+      query = {
+        name: {
+          $regex: search,
+          $options: "i",
+        },
+      };
+    }
+
+    const skills = await skillsCollection.find(query).toArray();
     res.json(skills);
   } catch (error) {
     console.error("Error fetching skills", error);
@@ -79,7 +96,31 @@ app.get("/skills", async (req, res) => {
 
 app.get("/mentors", async (req, res) => {
   try {
-    const mentors = await mentorsCollection.find({}).toArray();
+    const search = req.query.search;
+    const filterSkills = req.query.skill;
+    const query = {};
+    if (search) {
+      query = {
+        $or: [
+          {
+            name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ],
+      };
+    } else if (filterSkills) {
+      query = { skills: filterSkills };
+    }
+
+    const mentors = await mentorsCollection.find(query).toArray();
     res.json(mentors);
   } catch (error) {
     console.error("Error fetching mentors", error);
@@ -87,10 +128,10 @@ app.get("/mentors", async (req, res) => {
   }
 });
 
-app.get("/skills/:id", async (req, res) => {
+app.get("/explore/skills/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const query = { skillId: id };
+    const query = { _id: new ObjectId(id) };
 
     const skill = await skillsCollection.findOne(query);
 

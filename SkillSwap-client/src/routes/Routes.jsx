@@ -3,6 +3,7 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ExploreSkills from "../pages/public/ExploreSkills";
 import Home from "../pages/public/Home";
+import Mentors from "../pages/public/Mentors";
 import Root from "../root/Root";
 
 const router = createBrowserRouter([
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       },
       {
         path: "find-mentors",
+        element: <Mentors></Mentors>,
       },
       {
         path: "how-it-works",
@@ -24,6 +26,9 @@ const router = createBrowserRouter([
         path: "explore-skills",
         element: <ExploreSkills></ExploreSkills>,
       },
+      // {
+      //   path: `explore/skills/${params._id}`,
+      // },
       {
         path: "login",
         element: <Login></Login>,

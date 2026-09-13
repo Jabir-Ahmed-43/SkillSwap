@@ -1,11 +1,16 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { BounceLoader } from "react-spinners";
 
 const MentorDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [mentor, setMentor] = useState(null);
+
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
 
   useEffect(() => {
     const getMentor = async () => {
@@ -25,6 +30,25 @@ const MentorDetails = () => {
         <BounceLoader color="#4f39f6" />
       </div>
     );
+  }
+
+  function handleBookSession() {
+    if (!selectedDate || !selectedTime) {
+      alert("Please select both a date and a time to continue.");
+      return;
+    }
+
+    const bookingData = {
+      mentorId: mentor._id,
+      mentorName: mentor.name,
+      hourlyRate: mentor.hourlyRate,
+      date: selectedDate,
+      time: selectedTime,
+    };
+
+    console.log(bookingData, selectedDate, selectedTime);
+
+    navigate(`/book/${mentor._id}`, { state: { bookingData } });
   }
 
   return (
@@ -109,7 +133,6 @@ const MentorDetails = () => {
                     Education
                   </h3>
                   {mentor.education?.map((edu) => (
-                    // 🐛 FIX: Added missing key prop here
                     <div key={edu.id} className="flex items-start gap-2 mb-2">
                       <span className="mt-0.5">🎓</span>
                       <div>
@@ -239,7 +262,6 @@ const MentorDetails = () => {
                     </div>
                   ))
                 ) : (
-                  // 🔴 NEW: If the array is empty, show this friendly message
                   <div className="border-t border-slate-100 pt-8 pb-4 text-center">
                     <p className="text-slate-500 text-sm">
                       No reviews yet for this mentor.
@@ -269,7 +291,15 @@ const MentorDetails = () => {
                     {mentor.bookingDetails?.availableDays?.map((day) => (
                       <button
                         key={day}
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-slate-50 text-slate-600 hover:bg-indigo-50 border border-slate-200"
+                        onClick={() => {
+                          setSelectedDate(day);
+                          console.log(selectedDate);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                          selectedDate === day
+                            ? "bg-indigo-600 text-white border-transparent" // Active styling
+                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50" // Inactive styling
+                        }`}
                       >
                         {day}
                       </button>
@@ -285,7 +315,15 @@ const MentorDetails = () => {
                     {mentor.bookingDetails?.timeSlots?.map((time) => (
                       <button
                         key={time}
-                        className="px-3 py-2 rounded-lg text-xs font-medium transition-colors bg-slate-50 border border-slate-200 text-slate-600 hover:border-indigo-300"
+                        onClick={() => {
+                          setSelectedTime(time);
+                          console.log(selectedTime);
+                        }}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                          selectedTime === time
+                            ? "bg-indigo-600 text-white border-transparent" // Active styling
+                            : "bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-300" // Inactive styling
+                        }`}
                       >
                         {time}
                       </button>
@@ -294,7 +332,10 @@ const MentorDetails = () => {
                 </div>
               </div>
 
-              <button className="w-full block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors mb-2 cursor-pointer">
+              <button
+                onClick={handleBookSession}
+                className="w-full block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors mb-2 cursor-pointer"
+              >
                 Book a Session
               </button>
               <button className="w-full border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-600 font-medium py-2.5 rounded-xl transition-colors text-sm cursor-pointer">

@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import BookingCheckout from "../components/mentor/BookingCheckout";
 import MentorDetails from "../components/mentor/MentorDetails";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -31,9 +32,10 @@ const router = createBrowserRouter([
         path: "explore-skills",
         element: <ExploreSkills></ExploreSkills>,
       },
-      // {
-      //   path: `explore/skills/${params._id}`,
-      // },
+      {
+        path: "book/:id",
+        element: <BookingCheckout></BookingCheckout>,
+      },
       {
         path: "login",
         element: <Login></Login>,

@@ -88,7 +88,7 @@ export default function MentorCard({ mentor }) {
           View Profile
         </Link>
         <Link
-          to="/book/1"
+          to={`/mentors/${_id}`}
           className="flex-1 text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors"
         >
           Book Session

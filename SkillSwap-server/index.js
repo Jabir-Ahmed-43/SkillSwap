@@ -4,17 +4,13 @@ const app = express();
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
-const port = 3000;
-const {
-  MongoClient,
-  ServerApiVersion,
-  ObjectId,
-  serialize,
-} = require("mongodb");
+const port = process.env.PORT || 3000;
+
+const bookingRoutes = require("./routes/bookingRoutes");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.rxvswgv.mongodb.net/?appName=Cluster0`;
 
-// 1. Change to 'let' so it can be reassigned during the local fallback
 let client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -23,7 +19,6 @@ let client = new MongoClient(uri, {
   },
 });
 
-// 2. Declare collections globally so your Express routes can access them
 let skillSwapDatabase;
 let usersCollection;
 let mentorsCollection;
@@ -48,7 +43,6 @@ async function run() {
       const localClient = new MongoClient(localUri);
       await localClient.connect();
 
-      // This will now work without throwing an error
       client = localClient;
       console.log("Successfully connected to local MongoDB fallback!");
     } catch (localErr) {
@@ -58,9 +52,9 @@ async function run() {
     }
   }
 
-  // 3. Initialize the collections AFTER the connection is established.
-  // This ensures they are attached to whichever client (remote or local) actually worked.
   skillSwapDatabase = client.db("skill_swap");
+  app.locals.db = skillSwapDatabase;
+
   usersCollection = skillSwapDatabase.collection("users");
   mentorsCollection = skillSwapDatabase.collection("mentors");
   bookingsCollection = skillSwapDatabase.collection("bookings");
@@ -69,13 +63,16 @@ async function run() {
 }
 
 app.get("/", (req, res) => {
-  res.send("Hello world");
+  res.send("SkillSwap API is running");
 });
 
 app.get("/skills", async (req, res) => {
   try {
+    if (!skillsCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
     const search = req.query.search;
-    const query = {};
+    let query = {};
 
     if (search) {
       query = {
@@ -96,24 +93,20 @@ app.get("/skills", async (req, res) => {
 
 app.get("/mentors", async (req, res) => {
   try {
+    if (!mentorsCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
     const search = req.query.search;
     const filterSkills = req.query.skill;
-    const query = {};
+    let query = {};
+
     if (search) {
       query = {
         $or: [
-          {
-            name: {
-              $regex: search,
-              $options: "i",
-            },
-          },
-          {
-            name: {
-              $regex: search,
-              $options: "i",
-            },
-          },
+          { name: { $regex: search, $options: "i" } },
+          { role: { $regex: search, $options: "i" } },
+          { company: { $regex: search, $options: "i" } },
+          { skills: { $in: [new RegExp(search, "i")] } },
         ],
       };
     } else if (filterSkills) {
@@ -130,10 +123,16 @@ app.get("/mentors", async (req, res) => {
 
 app.get("/mentors/:id", async (req, res) => {
   try {
+    if (!mentorsCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
     const id = req.params.id;
 
-    const query = { _id: new ObjectId(id) };
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid mentor ID" });
+    }
 
+    const query = { _id: new ObjectId(id) };
     const mentor = await mentorsCollection.findOne(query);
 
     if (mentor) {
@@ -149,9 +148,16 @@ app.get("/mentors/:id", async (req, res) => {
 
 app.get("/explore/skills/:id", async (req, res) => {
   try {
+    if (!skillsCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
     const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
 
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid skill ID" });
+    }
+
+    const query = { _id: new ObjectId(id) };
     const skill = await skillsCollection.findOne(query);
 
     if (skill) {
@@ -167,14 +173,26 @@ app.get("/explore/skills/:id", async (req, res) => {
 
 app.post("/users", async (req, res) => {
   try {
+    if (!usersCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
     const newUser = req.body;
 
     if (!newUser.name || !newUser.email) {
       return res.status(400).json({ error: "Name and email are required" });
     }
 
-    newUser.createAt = new Date();
+    const existingUser = await usersCollection.findOne({
+      email: newUser.email,
+    });
+    if (existingUser) {
+      return res.status(200).json({
+        message: "User already exists",
+        userId: existingUser._id,
+      });
+    }
 
+    newUser.createAt = new Date();
     const result = await usersCollection.insertOne(newUser);
 
     res.status(201).json({
@@ -186,6 +204,9 @@ app.post("/users", async (req, res) => {
     res.status(500).json({ error: "Failed to save user to the database" });
   }
 });
+
+app.use("/bookings", bookingRoutes);
+app.use("/book", bookingRoutes);
 
 run().catch(console.dir);
 

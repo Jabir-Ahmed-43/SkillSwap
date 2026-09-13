@@ -3,7 +3,7 @@ import { Link } from "react-router";
 export default function MentorCard({ mentor }) {
   const {
     name,
-    mentorId,
+    _id,
     bio,
     role,
     company,
@@ -82,17 +82,17 @@ export default function MentorCard({ mentor }) {
 
       <div className="flex gap-2">
         <Link
-          to={`/mentors/${mentorId}`}
+          to={`/mentors/${_id}`}
           className="flex-1 text-center text-xs font-semibold border border-slate-200 hover:border-indigo-300 text-slate-700 hover:text-indigo-600 py-2 rounded-lg transition-colors"
         >
           View Profile
         </Link>
-        <a
-          href="/book/1"
+        <Link
+          to="/book/1"
           className="flex-1 text-center text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors"
         >
           Book Session
-        </a>
+        </Link>
       </div>
     </div>
   );

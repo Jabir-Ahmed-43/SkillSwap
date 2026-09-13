@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import MentorDetails from "../components/mentor/MentorDetails";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ExploreSkills from "../pages/public/ExploreSkills";
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
       {
         path: "find-mentors",
         element: <Mentors></Mentors>,
+      },
+      {
+        path: "mentors/:id",
+        element: <MentorDetails></MentorDetails>,
       },
       {
         path: "how-it-works",

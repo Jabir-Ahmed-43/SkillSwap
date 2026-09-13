@@ -117,8 +117,11 @@ const ExploreSkills = () => {
           </button>
         ))}
       </div>
-
-      {isLoading && <BounceLoader color="#4f39f6" />}
+      {isLoading && (
+        <div className="flex items-center justify-center">
+          <BounceLoader color="#4f39f6" />{" "}
+        </div>
+      )}
       {error && (
         <p className="text-center text-gray-500 my-10">Error: {error} </p>
       )}

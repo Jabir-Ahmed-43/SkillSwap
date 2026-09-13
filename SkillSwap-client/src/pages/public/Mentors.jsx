@@ -22,7 +22,7 @@ const Mentors = () => {
         const data = await response.json();
         setMentors(data);
         setIsLoading(false);
-        console.log(data);
+        // console.log(data);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err.message);

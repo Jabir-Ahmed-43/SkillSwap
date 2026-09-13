@@ -128,6 +128,25 @@ app.get("/mentors", async (req, res) => {
   }
 });
 
+app.get("/mentors/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const query = { _id: new ObjectId(id) };
+
+    const mentor = await mentorsCollection.findOne(query);
+
+    if (mentor) {
+      res.json(mentor);
+    } else {
+      res.status(404).json({ error: "Mentor not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching single mentor:", error);
+    res.status(500).json({ error: "Failed to fetch the mentor" });
+  }
+});
+
 app.get("/explore/skills/:id", async (req, res) => {
   try {
     const id = req.params.id;

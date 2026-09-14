@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import community from "../../assets/images/priscilla-du-preez-XkKCui44iM0-unsplash.jpg";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -11,6 +11,7 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { signInUser, signGoogle, setLoading } = useContext(AuthContext);
 
   const handleLogin = async (e) => {
@@ -25,7 +26,8 @@ const Login = () => {
     setSubmitting(true);
     try {
       await signInUser(email, password);
-      navigate("/");
+      const from = location.state?.from || "/dashboard";
+      navigate(from, { replace: true });
     } catch (err) {
       console.error(err);
       if (setLoading) setLoading(false);
@@ -54,7 +56,9 @@ const Login = () => {
     setSubmitting(true);
     try {
       await signGoogle();
-      navigate("/");
+      const from = location.state?.from || "/dashboard";
+
+      navigate(from, { replace: true });
     } catch (err) {
       console.error(err);
       if (setLoading) setLoading(false);

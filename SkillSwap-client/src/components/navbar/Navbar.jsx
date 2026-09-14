@@ -61,7 +61,7 @@ const Navbar = () => {
         </div>
         <div className="navbar-end gap-x-4">
           {user ? (
-            <div className="flex items-center gap-3">
+            <Link to="/dashboard" className="flex items-center gap-3">
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
@@ -88,7 +88,7 @@ const Navbar = () => {
               >
                 Sign Out
               </button>
-            </div>
+            </Link>
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/login" className="btn btn-ghost rounded-2xl">

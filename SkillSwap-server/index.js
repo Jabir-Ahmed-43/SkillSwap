@@ -110,6 +110,24 @@ app.get("/popular-skills", async (req, res) => {
   }
 });
 
+app.get("/featured-mentors", async (req, res) => {
+  try {
+    if (!mentorsCollection) {
+      return res.status(503).json({ error: "Database not connected yet" });
+    }
+    const featuredMentors = await mentorsCollection
+      .find({})
+      .sort({ sessionCount: -1 })
+      .limit(3)
+      .toArray();
+
+    res.json(featuredMentors);
+  } catch (error) {
+    console.error("Error fetching popular skills:", error);
+    res.status(500).json({ error: "Failed to fetch popular skills" });
+  }
+});
+
 app.get("/mentors", async (req, res) => {
   try {
     if (!mentorsCollection) {

@@ -92,14 +92,6 @@ const ExploreSkills = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {/* <div className="shrink-0">
-          <select className="w-full md:w-48 appearance-none bg-white border border-gray-300 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <option>All Levels</option>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-        </div> */}
       </div>
 
       <div className="flex flex-wrap gap-3 mb-8">
@@ -154,14 +146,6 @@ const ExploreSkills = () => {
           </button>
         </div>
       )}
-
-      {/* <p className="text-gray-500 text-sm mb-4">{skills.length} skills found</p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {skills.map((skill) => (
-          <SkillCard key={skill._id} skill={skill}></SkillCard>
-        ))}
-      </div> */}
     </div>
   );
 };

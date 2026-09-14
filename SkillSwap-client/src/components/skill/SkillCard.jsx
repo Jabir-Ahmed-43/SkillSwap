@@ -23,7 +23,7 @@ const SkillCard = ({ skill }) => {
             {skill.mentors} mentors available
           </span>
           <Link
-            to={`/explore/skills/${skill._id}`}
+            to="/find-mentors"
             className="text-indigo-600 text-sm font-medium hover:text-indigo-700"
           >
             Explore &rarr;

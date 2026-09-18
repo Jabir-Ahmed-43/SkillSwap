@@ -208,6 +208,24 @@ app.get("/explore/skills/:id", async (req, res) => {
   }
 });
 
+app.get("/mybookings", async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    if (!email) {
+      return res.status(400).send({ message: "Email is required" });
+    }
+    const query = { userEmail: email };
+
+    const result = await bookingsCollection.find(query).toArray();
+
+    res.send(result);
+  } catch (err) {
+    console.error("Error fetching mentors data");
+    res.status(500).json({ err: "Failed to fetch the mentors" });
+  }
+});
+
 app.post("/users", async (req, res) => {
   try {
     if (!usersCollection) {

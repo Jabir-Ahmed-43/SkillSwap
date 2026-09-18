@@ -9,6 +9,7 @@ import Register from "../pages/auth/Register";
 import ExploreSkills from "../pages/public/ExploreSkills";
 import Home from "../pages/public/Home";
 import Mentors from "../pages/public/Mentors";
+import Bookings from "../pages/student/Bookings";
 import Root from "../root/Root";
 import PrivateRoute from "./PrivateRoute";
 
@@ -45,7 +46,6 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-
       {
         path: "login",
         element: <Login></Login>,
@@ -67,6 +67,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <DashboardLayout></DashboardLayout>,
+      },
+      {
+        path: "mybookings",
+        element: <Bookings></Bookings>,
       },
     ],
   },

@@ -41,6 +41,7 @@ const MentorDetails = () => {
     const bookingData = {
       mentorId: mentor._id,
       mentorName: mentor.name,
+      mentorImage: mentor.avatarUrl,
       hourlyRate: mentor.hourlyRate,
       date: selectedDate,
       time: selectedTime,
